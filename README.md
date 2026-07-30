@@ -51,8 +51,8 @@ GitQuack does not modify global or system Git configuration.
 When a push targets a protected branch such as `main`, GitQuack asks for confirmation before allowing the push:
 
 ```text
-      _
-  __(.)<
+    __
+ __( 0)<
  \___)
   " "   GITQUACK GUARD
 
