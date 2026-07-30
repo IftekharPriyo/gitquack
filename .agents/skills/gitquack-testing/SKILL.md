@@ -13,4 +13,4 @@ Testing conventions:
 - Test student-facing output carefully, including exact text when it matters.
 - Add regression tests for fixes and behavior changes.
 
-Current status: the test suite only verifies the temporary `gitduck hello` command.
+Current status: the test suite verifies CLI scaffold behavior and Milestone 1 initialization.
