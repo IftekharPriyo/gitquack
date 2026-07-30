@@ -3,8 +3,11 @@ import { stderr } from 'node:process';
 import type { Command } from 'commander';
 import { readConfig } from '../config/read.js';
 import { CliError } from '../errors/cli-error.js';
+import { getCurrentBranch } from '../git/branch.js';
 import { findRepositoryRoot } from '../git/repository.js';
+import { handleBranchNamingAfterCheckout } from '../hooks/post-checkout.js';
 import { shouldAllowPush } from '../hooks/pre-push.js';
+import { shouldUseColor } from '../ui/terminal.js';
 
 async function readStdin(): Promise<string> {
   const hookInput = process.env.GITQUACK_PRE_PUSH_INPUT;
@@ -22,15 +25,6 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-function shouldUseColor(): boolean {
-  return (
-    stderr.isTTY &&
-    'getColorDepth' in stderr &&
-    typeof stderr.getColorDepth === 'function' &&
-    stderr.getColorDepth() > 1
-  );
-}
-
 export async function runPrePushHook(cwd: string): Promise<void> {
   const repositoryRoot = await findRepositoryRoot(cwd);
 
@@ -44,13 +38,37 @@ export async function runPrePushHook(cwd: string): Promise<void> {
     config,
     input,
     isInteractive: stdin.isTTY,
-    useColor: shouldUseColor(),
+    useColor: shouldUseColor(stderr),
     writeError: console.error
   });
 
   if (!allowed) {
     throw new CliError('', 1);
   }
+}
+
+export async function runPostCheckoutHook(
+  cwd: string,
+  checkoutFlag: string
+): Promise<void> {
+  const repositoryRoot = await findRepositoryRoot(cwd);
+
+  if (repositoryRoot === null) {
+    throw new CliError('GitQuack could not find the Git repository root.');
+  }
+
+  const config = await readConfig(repositoryRoot);
+  const branchName = await getCurrentBranch(repositoryRoot);
+
+  await handleBranchNamingAfterCheckout({
+    config,
+    repositoryRoot,
+    branchName,
+    checkoutFlag,
+    isInteractive: stdin.isTTY,
+    useColor: shouldUseColor(stderr),
+    writeLine: console.error
+  });
 }
 
 export function registerHookCommand(program: Command): void {
@@ -64,4 +82,20 @@ export function registerHookCommand(program: Command): void {
     .action(async () => {
       await runPrePushHook(process.cwd());
     });
+
+  hook
+    .command('post-checkout')
+    .argument('[previousHead]')
+    .argument('[newHead]')
+    .argument('<flag>')
+    .description('Run the GitQuack post-checkout hook.')
+    .action(
+      async (
+        _previousHead: string | undefined,
+        _newHead: string | undefined,
+        flag: string
+      ) => {
+        await runPostCheckoutHook(process.cwd(), flag);
+      }
+    );
 }

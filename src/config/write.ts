@@ -4,13 +4,19 @@ import { join } from 'node:path';
 import type { GitQuackConfig } from './types.js';
 
 export const configFileName = '.gitquack';
+export const legacyConfigFileName = '.gitquack.json';
 
 export async function configExists(repositoryRoot: string): Promise<boolean> {
   try {
     await access(join(repositoryRoot, configFileName), constants.F_OK);
     return true;
   } catch {
-    return false;
+    try {
+      await access(join(repositoryRoot, legacyConfigFileName), constants.F_OK);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

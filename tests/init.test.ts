@@ -130,17 +130,7 @@ or move into an existing Git project before running:
     });
 
     await expect(readConfig(repository)).resolves.toBe(
-      `${JSON.stringify(
-        {
-          version: 1,
-          protectedBranches: ['main', 'master', 'develop'],
-          directPushWarning: true,
-          branchNamingWarning: true,
-          detailedExplanations: true
-        },
-        null,
-        2
-      )}\n`
+      `${JSON.stringify(defaultConfig, null, 2)}\n`
     );
   });
 

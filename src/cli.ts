@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import { Command } from 'commander';
+import { registerCheckBranchCommand } from './commands/check-branch.js';
 import { registerHelloCommand } from './commands/hello.js';
 import { registerHookCommand } from './commands/hook.js';
 import { registerInitCommand } from './commands/init.js';
@@ -17,6 +18,7 @@ export function createCli(): Command {
 
   registerHelloCommand(program);
   registerInitCommand(program);
+  registerCheckBranchCommand(program);
   registerHookCommand(program);
 
   return program;
