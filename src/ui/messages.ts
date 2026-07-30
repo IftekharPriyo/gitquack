@@ -4,8 +4,8 @@ const plain = new Chalk({ level: 0 });
 const colors = new Chalk({ level: 1 });
 
 export const gitQuackGuardBanner = String.raw`
-      _
-  __(.)<
+    __
+ __( 0)<
  \___)
   " "   GITQUACK GUARD
 `;
@@ -63,8 +63,8 @@ working branch and reviewed before being merged.
 
 A common workflow is:
 
-  ${suggestedCommand('git switch -c feature/short-description')}
-  ${suggestedCommand('git push -u origin feature/short-description')}
+  ${suggestedCommand('git switch -c feature/feature-name')}
+  ${suggestedCommand('git push -u origin feature/feature-name')}
 
 ${prompt}`;
 }
