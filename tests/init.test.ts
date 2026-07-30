@@ -1,5 +1,12 @@
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -8,6 +15,7 @@ import { defaultConfig } from '../src/config/defaults.js';
 import { configFileName } from '../src/config/write.js';
 import { CliError } from '../src/errors/cli-error.js';
 import { initializeGitQuack } from '../src/commands/init.js';
+import { gitQuackHooksPath, prePushHookName } from '../src/git/hooks.js';
 
 const execFileAsync = promisify(execFile);
 const temporaryDirectories: string[] = [];
@@ -26,6 +34,20 @@ async function createTemporaryGitRepository(): Promise<string> {
 
 async function readConfig(repositoryRoot: string): Promise<string> {
   return readFile(join(repositoryRoot, configFileName), 'utf8');
+}
+
+async function getLocalConfig(
+  repositoryRoot: string,
+  key: string
+): Promise<string> {
+  const { stdout } = await execFileAsync(
+    'git',
+    ['config', '--local', '--get', key],
+    {
+      cwd: repositoryRoot
+    }
+  );
+  return stdout.trim();
 }
 
 describe('init command', () => {
@@ -136,5 +158,51 @@ or move into an existing Git project before running:
     await expect(readConfig(repository)).resolves.toBe(
       `${JSON.stringify(defaultConfig, null, 2)}\n`
     );
+  });
+
+  it('installs the pre-push hook', async () => {
+    const repository = await createTemporaryGitRepository();
+
+    await initializeGitQuack({
+      cwd: repository,
+      writeLine: () => undefined
+    });
+
+    const hook = await stat(
+      join(repository, ...gitQuackHooksPath.split('/'), prePushHookName)
+    );
+    expect(hook.isFile()).toBe(true);
+  });
+
+  it('sets core.hooksPath locally', async () => {
+    const repository = await createTemporaryGitRepository();
+
+    await initializeGitQuack({
+      cwd: repository,
+      writeLine: () => undefined
+    });
+
+    await expect(getLocalConfig(repository, 'core.hooksPath')).resolves.toBe(
+      gitQuackHooksPath
+    );
+  });
+
+  it('detects an existing conflicting hooks path', async () => {
+    const repository = await createTemporaryGitRepository();
+
+    await execFileAsync(
+      'git',
+      ['config', '--local', 'core.hooksPath', '.husky'],
+      {
+        cwd: repository
+      }
+    );
+
+    await expect(
+      initializeGitQuack({
+        cwd: repository,
+        writeLine: () => undefined
+      })
+    ).rejects.toThrow('GitQuack could not install its Git hook');
   });
 });
