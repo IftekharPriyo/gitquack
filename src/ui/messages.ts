@@ -1,17 +1,30 @@
+export const gitQuackGuardBanner = String.raw`
+      _
+  __(.)<
+ \___)
+  " "   GITQUACK GUARD
+`;
+
 export function formatProtectedBranchWarning(
   branches: string[],
   detailedExplanations: boolean
 ): string {
   const branchList = branches.map((branch) => `"${branch}"`).join(', ');
   const branchWord = branches.length === 1 ? 'branch' : 'branches';
+  const branchLabel =
+    branches.length === 1 ? 'Protected branch' : 'Protected branches';
 
   if (!detailedExplanations) {
-    return `🦆 Direct push to protected ${branchWord} ${branchList}.
+    return `${gitQuackGuardBanner}
+[!] Direct push to protected ${branchWord} ${branchList}.
 
 Continue? [y/N] `;
   }
 
-  return `🦆 GitQuack noticed something
+  return `${gitQuackGuardBanner}
+[!] GitQuack noticed a protected branch push
+
+${branchLabel}: ${branchList}
 
 You are about to push directly to protected ${branchWord} ${branchList}.
 
