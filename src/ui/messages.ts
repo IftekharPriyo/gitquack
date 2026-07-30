@@ -1,3 +1,8 @@
+import { Chalk } from 'chalk';
+
+const plain = new Chalk({ level: 0 });
+const colors = new Chalk({ level: 1 });
+
 export const gitQuackGuardBanner = String.raw`
       _
   __(.)<
@@ -5,38 +10,63 @@ export const gitQuackGuardBanner = String.raw`
   " "   GITQUACK GUARD
 `;
 
+export interface ProtectedBranchWarningOptions {
+  useColor?: boolean;
+}
+
 export function formatProtectedBranchWarning(
   branches: string[],
-  detailedExplanations: boolean
+  detailedExplanations: boolean,
+  options: ProtectedBranchWarningOptions = {}
 ): string {
+  const color = options.useColor === true;
   const branchList = branches.map((branch) => `"${branch}"`).join(', ');
   const branchWord = branches.length === 1 ? 'branch' : 'branches';
   const branchLabel =
     branches.length === 1 ? 'Protected branch' : 'Protected branches';
+  const chalk = color ? colors : plain;
+  const banner = color
+    ? chalk.yellow.bold(gitQuackGuardBanner)
+    : gitQuackGuardBanner;
+  const alert = color ? chalk.yellow.bold('[!]') : '[!]';
+  const decoratedBranchList = color
+    ? branches.map((branch) => chalk.red.bold(`"${branch}"`)).join(', ')
+    : branchList;
+  const decoratedBranchLabel = color
+    ? chalk.red.bold(branchLabel)
+    : branchLabel;
+  const suggestedCommand = (command: string): string =>
+    color ? chalk.green(command) : command;
+  const prompt = color
+    ? chalk.cyan(`Continue pushing directly to ${decoratedBranchList}? [y/N] `)
+    : `Continue pushing directly to ${branchList}? [y/N] `;
+  const shortPrompt = color
+    ? chalk.cyan('Continue? [y/N] ')
+    : 'Continue? [y/N] ';
 
   if (!detailedExplanations) {
-    return `${gitQuackGuardBanner}
-[!] Direct push to protected ${branchWord} ${branchList}.
+    return `${banner}
+${alert} Direct push to protected ${branchWord} ${decoratedBranchList}.
 
-Continue? [y/N] `;
+${shortPrompt}`;
   }
 
-  return `${gitQuackGuardBanner}
-[!] GitQuack noticed a protected branch push
+  return `${banner}
+${alert} ${color ? chalk.bold('GitQuack noticed a protected branch push') : 'GitQuack noticed a protected branch push'}
 
-${branchLabel}: ${branchList}
+${decoratedBranchLabel}: ${decoratedBranchList}
 
-You are about to push directly to protected ${branchWord} ${branchList}.
+You are about to push directly to protected ${branchWord} ${decoratedBranchList}.
 
 In collaborative projects, changes are commonly pushed through a separate
 working branch and reviewed before being merged.
 
 A common workflow is:
 
-  git switch -c feature/short-description
-  git push -u origin feature/short-description
+  ${suggestedCommand('git switch -c feature/short-description')}
+  ${suggestedCommand('git push -u origin feature/short-description')}
 
-Continue pushing directly to ${branchList}? [y/N] `;
+${prompt}`;
 }
 
 export const nonInteractiveProtectedPushMessage = `GitQuack detected a direct push to a protected branch, but confirmation

@@ -101,6 +101,12 @@ describe('protected push confirmation', () => {
     );
   });
 
+  it('can colorize interactive warnings', () => {
+    expect(
+      formatProtectedBranchWarning(['main'], true, { useColor: true })
+    ).toContain('\u001B[');
+  });
+
   it('allows the push after yes', async () => {
     await expect(
       shouldAllowPush({
