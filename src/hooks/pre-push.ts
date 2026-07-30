@@ -19,6 +19,7 @@ export interface PrePushOptions {
   config: GitQuackConfig;
   input: string;
   isInteractive: boolean;
+  useColor?: boolean;
   prompt?: PromptForConfirmation;
   writeError: (message: string) => void;
 }
@@ -27,6 +28,7 @@ export async function shouldAllowPush({
   config,
   input,
   isInteractive,
+  useColor = false,
   prompt = promptForConfirmation,
   writeError
 }: PrePushOptions): Promise<boolean> {
@@ -62,7 +64,13 @@ export async function shouldAllowPush({
   }
 
   const answer = await prompt(
-    formatProtectedBranchWarning(protectedBranches, config.detailedExplanations)
+    formatProtectedBranchWarning(
+      protectedBranches,
+      config.detailedExplanations,
+      {
+        useColor
+      }
+    )
   );
 
   return isAffirmativeAnswer(answer);

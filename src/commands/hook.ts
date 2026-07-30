@@ -1,4 +1,5 @@
 import { stdin } from 'node:process';
+import { stderr } from 'node:process';
 import type { Command } from 'commander';
 import { readConfig } from '../config/read.js';
 import { CliError } from '../errors/cli-error.js';
@@ -21,6 +22,15 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+function shouldUseColor(): boolean {
+  return (
+    stderr.isTTY &&
+    'getColorDepth' in stderr &&
+    typeof stderr.getColorDepth === 'function' &&
+    stderr.getColorDepth() > 1
+  );
+}
+
 export async function runPrePushHook(cwd: string): Promise<void> {
   const repositoryRoot = await findRepositoryRoot(cwd);
 
@@ -34,6 +44,7 @@ export async function runPrePushHook(cwd: string): Promise<void> {
     config,
     input,
     isInteractive: stdin.isTTY,
+    useColor: shouldUseColor(),
     writeError: console.error
   });
 

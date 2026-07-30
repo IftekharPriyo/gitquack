@@ -7,6 +7,7 @@ import {
   findProtectedPushBranches,
   isDeletionRef
 } from '../src/hooks/protected-branches.js';
+import { formatProtectedBranchWarning } from '../src/ui/messages.js';
 
 const mainUpdate = 'refs/heads/main abc123 refs/heads/main def456';
 
@@ -94,6 +95,18 @@ describe('protected branch detection', () => {
 });
 
 describe('protected push confirmation', () => {
+  it('shows the ASCII GitQuack guard in interactive warnings', () => {
+    expect(formatProtectedBranchWarning(['main'], true)).toContain(
+      'GITQUACK GUARD'
+    );
+  });
+
+  it('can colorize interactive warnings', () => {
+    expect(
+      formatProtectedBranchWarning(['main'], true, { useColor: true })
+    ).toContain('\u001B[');
+  });
+
   it('allows the push after yes', async () => {
     await expect(
       shouldAllowPush({

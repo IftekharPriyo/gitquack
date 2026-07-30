@@ -1,4 +1,4 @@
-# GitQuack 🦆
+# GitQuack
 
 Better Git habits, one quack at a time
 
@@ -26,11 +26,7 @@ gitquack hello
 gitquack init
 ```
 
-`gitquack hello` prints:
-
-```text
-🦆 GitQuack is ready.
-```
+`gitquack hello` prints a short readiness message.
 
 `gitquack init` creates `.gitquack` in the current Git repository root when GitQuack has not already been initialized there.
 
@@ -38,8 +34,8 @@ It also installs a GitQuack-managed hook directory:
 
 ```text
 .gitquack-hooks/
-└── hooks/
-    └── pre-push
+`-- hooks/
+    `-- pre-push
 ```
 
 and sets the repository-local Git config:
@@ -55,7 +51,14 @@ GitQuack does not modify global or system Git configuration.
 When a push targets a protected branch such as `main`, GitQuack asks for confirmation before allowing the push:
 
 ```text
-🦆 GitQuack noticed something
+      _
+  __(.)<
+ \___)
+  " "   GITQUACK GUARD
+
+[!] GitQuack noticed a protected branch push
+
+Protected branch: "main"
 
 You are about to push directly to protected branch "main".
 
