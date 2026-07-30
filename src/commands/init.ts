@@ -3,6 +3,7 @@ import { defaultConfig } from '../config/defaults.js';
 import { configExists, writeConfig } from '../config/write.js';
 import { CliError } from '../errors/cli-error.js';
 import { isGitInstalled } from '../git/executable.js';
+import { installPrePushHook } from '../git/hooks.js';
 import { findRepositoryRoot } from '../git/repository.js';
 
 const nonGitRepositoryMessage = `This directory is not inside a Git repository.
@@ -37,7 +38,19 @@ export async function initializeGitQuack({
     throw new CliError(nonGitRepositoryMessage);
   }
 
-  if (await configExists(repositoryRoot)) {
+  const alreadyConfigured = await configExists(repositoryRoot);
+
+  try {
+    await installPrePushHook(repositoryRoot);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new CliError(error.message);
+    }
+
+    throw error;
+  }
+
+  if (alreadyConfigured) {
     writeLine('GitQuack is already initialized in this repository.');
     return;
   }
