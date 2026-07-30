@@ -1,4 +1,4 @@
-# GitQuack
+# GitQuack 🦆
 
 Better Git habits, one quack at a time
 
