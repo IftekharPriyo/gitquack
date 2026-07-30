@@ -1,0 +1,13 @@
+#!/bin/sh
+set +e
+gitquack_pre_push_input=$(cat)
+gitquack_command=${GITQUACK_COMMAND:-gitquack}
+
+if [ "${GITQUACK_DISABLE_TTY:-}" = "1" ]; then
+  GITQUACK_PRE_PUSH_INPUT="$gitquack_pre_push_input" "$gitquack_command" hook pre-push "$@" < /dev/null
+elif { : < /dev/tty; } 2>/dev/null; then
+  GITQUACK_PRE_PUSH_INPUT="$gitquack_pre_push_input" "$gitquack_command" hook pre-push "$@" < /dev/tty
+else
+  GITQUACK_PRE_PUSH_INPUT="$gitquack_pre_push_input" "$gitquack_command" hook pre-push "$@" < /dev/null
+fi
+exit $?
