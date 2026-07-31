@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { configFileName } from './write.js';
-import type { GitQuackConfig } from './types.js';
+import { defaultConfig } from './defaults.js';
+import { configFileName, legacyConfigFileName } from './write.js';
+import type { BranchNamingConfig, GitQuackConfig } from './types.js';
 
 function isStringArray(value: unknown): value is string[] {
   return (
@@ -9,7 +10,26 @@ function isStringArray(value: unknown): value is string[] {
   );
 }
 
-function isGitQuackConfig(value: unknown): value is GitQuackConfig {
+function isBranchNamingConfig(value: unknown): value is BranchNamingConfig {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'allowedPrefixes' in value &&
+    isStringArray(value.allowedPrefixes) &&
+    'separator' in value &&
+    typeof value.separator === 'string' &&
+    value.separator.length > 0 &&
+    'descriptionPattern' in value &&
+    typeof value.descriptionPattern === 'string'
+  );
+}
+
+function isGitQuackConfigBase(value: unknown): value is Omit<
+  GitQuackConfig,
+  'branchNaming'
+> & {
+  branchNaming?: unknown;
+} {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -26,18 +46,45 @@ function isGitQuackConfig(value: unknown): value is GitQuackConfig {
   );
 }
 
+function normalizeConfig(value: unknown): GitQuackConfig | null {
+  if (!isGitQuackConfigBase(value)) {
+    return null;
+  }
+
+  if (
+    value.branchNaming !== undefined &&
+    !isBranchNamingConfig(value.branchNaming)
+  ) {
+    return null;
+  }
+
+  return {
+    ...value,
+    branchNaming: value.branchNaming ?? defaultConfig.branchNaming
+  };
+}
+
 export async function readConfig(
   repositoryRoot: string
 ): Promise<GitQuackConfig> {
-  const rawConfig = await readFile(
-    join(repositoryRoot, configFileName),
-    'utf8'
-  );
+  let rawConfig: string;
+
+  try {
+    rawConfig = await readFile(join(repositoryRoot, configFileName), 'utf8');
+  } catch {
+    rawConfig = await readFile(
+      join(repositoryRoot, legacyConfigFileName),
+      'utf8'
+    );
+  }
+
   const parsedConfig: unknown = JSON.parse(rawConfig);
 
-  if (!isGitQuackConfig(parsedConfig)) {
+  const config = normalizeConfig(parsedConfig);
+
+  if (config === null) {
     throw new Error(`Invalid ${configFileName} configuration.`);
   }
 
-  return parsedConfig;
+  return config;
 }

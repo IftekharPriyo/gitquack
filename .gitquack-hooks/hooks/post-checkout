@@ -1,0 +1,10 @@
+#!/bin/sh
+gitquack_command=${GITQUACK_COMMAND:-gitquack}
+
+if [ "${GITQUACK_DISABLE_TTY:-}" = "1" ]; then
+  exec "$gitquack_command" hook post-checkout "$@" < /dev/null
+elif { : < /dev/tty; } 2>/dev/null; then
+  exec "$gitquack_command" hook post-checkout "$@" < /dev/tty
+else
+  exec "$gitquack_command" hook post-checkout "$@" < /dev/null
+fi

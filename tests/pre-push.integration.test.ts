@@ -67,6 +67,29 @@ exec "${projectPath}/node_modules/.bin/tsx" "${projectPath}/src/cli.ts" "$@"
   return shim;
 }
 
+async function writeSourceHooks(worktree: string): Promise<void> {
+  const hooksDirectory = join(worktree, '.gitquack-hooks', 'hooks');
+  const projectPath = pathForShell(projectRoot);
+  const prePushHook = join(hooksDirectory, 'pre-push');
+  const postCheckoutHook = join(hooksDirectory, 'post-checkout');
+
+  await writeFile(
+    prePushHook,
+    `#!/bin/sh
+gitquack_pre_push_input=$(cat)
+GITQUACK_PRE_PUSH_INPUT="$gitquack_pre_push_input" exec "${projectPath}/node_modules/.bin/tsx" "${projectPath}/src/cli.ts" hook pre-push "$@" < /dev/null
+`
+  );
+  await writeFile(
+    postCheckoutHook,
+    `#!/bin/sh
+GITQUACK_DISABLE_TTY=1 exec "${projectPath}/node_modules/.bin/tsx" "${projectPath}/src/cli.ts" hook post-checkout "$@" < /dev/null
+`
+  );
+  await chmod(prePushHook, 0o755);
+  await chmod(postCheckoutHook, 0o755);
+}
+
 async function createPushTestRepository(): Promise<PushTestRepository> {
   const root = await createTemporaryDirectory();
   const remote = join(root, 'remote.git');
@@ -92,6 +115,7 @@ async function createPushTestRepository(): Promise<PushTestRepository> {
     cwd: worktree,
     writeLine: () => undefined
   });
+  await writeSourceHooks(worktree);
 
   return { remote, worktree, gitQuackCommand };
 }
