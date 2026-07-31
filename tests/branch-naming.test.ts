@@ -59,7 +59,7 @@ describe('branch-name validation', () => {
     expect(validate('random/test')).toMatchObject({
       valid: false,
       reason: 'unsupported-prefix',
-      suggestions: ['feature/test', 'feat/test', 'fix/test']
+      suggestions: ['test/test', 'feature/test', 'feat/test']
     });
   });
 
@@ -104,6 +104,38 @@ describe('branch-name validation', () => {
     expect(
       suggestBranchNames('feature/Login_Page', defaultConfig.branchNaming)
     ).toEqual(['feature/login-page', 'feat/login-page', 'fix/login-page']);
+  });
+
+  it('prefers fix suggestions for bug-like branch names', () => {
+    expect(
+      suggestBranchNames('login-error', defaultConfig.branchNaming)
+    ).toEqual(['fix/login-error', 'feature/login-error', 'feat/login-error']);
+  });
+
+  it('prefers chore suggestions for maintenance branch names', () => {
+    expect(
+      suggestBranchNames('update-dependencies', defaultConfig.branchNaming)
+    ).toEqual([
+      'chore/update-dependencies',
+      'feature/update-dependencies',
+      'feat/update-dependencies'
+    ]);
+  });
+
+  it('prefers docs suggestions for documentation branch names', () => {
+    expect(
+      suggestBranchNames('readme-update', defaultConfig.branchNaming)
+    ).toEqual([
+      'docs/readme-update',
+      'chore/readme-update',
+      'feature/readme-update'
+    ]);
+  });
+
+  it('prefers test suggestions for test branch names', () => {
+    expect(
+      suggestBranchNames('login-spec', defaultConfig.branchNaming)
+    ).toEqual(['test/login-spec', 'feature/login-spec', 'feat/login-spec']);
   });
 
   it('suggests from the description after an unsupported prefix', () => {

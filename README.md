@@ -132,7 +132,7 @@ feature/add login
 
 Protected branches such as `main`, `master`, and `develop` do not trigger branch-name guidance.
 
-When a branch does not match the convention, GitQuack explains the convention and suggests branch names. In an interactive terminal, GitQuack shows an arrow-key selector:
+When a branch does not match the convention, GitQuack explains the convention and suggests branch names. Suggestions use local deterministic keyword rules, so names like `login-error`, `readme-update`, `login-spec`, and `update-dependencies` prefer `fix/`, `docs/`, `test/`, and `chore/` respectively. In an interactive terminal, GitQuack shows an arrow-key selector:
 
 ```text
     __
